@@ -1,0 +1,31 @@
+name: Publish PowerShell Module to GitHub Packages
+
+# Trigger the automation whenever a new release is published on GitHub
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate and Publish to GitHub Packages
+        shell: pwsh
+        run: |
+          # 1. Establish variables
+          $Owner = "${{ github.repository_owner }}"
+          $RepoUrl = "https://github.com"
+          $Token = "${{ secrets.GITHUB_TOKEN }}"
+          
+          # 2. Register the repository package endpoint locally
+          Register-PSRepository -Name "GitHubPackages" -SourceLocation $RepoUrl -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+          
+          # 3. Publish the code directly to your GitHub Packages sidebar
+          Publish-Module -Path "./src" -NuGetAPIKey $Token -Repository "GitHubPackages" -Verbose
